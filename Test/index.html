@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade — Neon Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="background-glow"></div>
+
+  <!-- Game Switcher -->
+  <nav id="game-switcher">
+    <button class="switcher-btn active" id="switch-snake" title="Play Snake">
+      <span class="sw-icon">🐍</span> <span class="sw-text">Snake</span>
+    </button>
+    <button class="switcher-btn" id="switch-ttt" title="Play Tic Tac Toe">
+      <span class="sw-icon">⭕</span> <span class="sw-text">Tic Tac Toe</span>
+    </button>
+  </nav>
+
+  <!-- 🐍 SNAKE APP -->
+  <main id="snake-app" class="app-container">
+    <header id="game-header">
+      <h1>🐍 SNAKE</h1>
+      <div id="score-panel">
+        <div class="score-box p1-box" id="current-score-box">
+          <span class="score-label">P1 SCORE</span>
+          <span class="score-value" id="score">0</span>
+        </div>
+        <div class="score-box p2-box hidden" id="p2-score-box">
+          <span class="score-label">P2 SCORE</span>
+          <span class="score-value" id="score2">0</span>
+        </div>
+        <div class="score-box" id="high-score-box">
+          <span class="score-label">BEST</span>
+          <span class="score-value" id="high-score">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="main-layout">
+      <div id="canvases-container">
+        <div class="canvas-wrapper" id="canvas-wrapper-1">
+          <div class="p-label p1-label-overlay">PLAYER 1</div>
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div class="canvas-wrapper hidden" id="canvas-wrapper-2">
+          <div class="p-label p2-label-overlay">PLAYER 2</div>
+          <canvas id="game-canvas-2"></canvas>
+        </div>
+        
+        <div id="overlay" class="visible">
+          <div id="overlay-content">
+            
+            <div id="start-screen">
+              <div class="overlay-icon">🍎</div>
+              <h2 class="title-margin">Ready to Play?</h2>
+              
+              <!-- Custom Dropdowns -->
+              <div class="dropdowns-container">
+                
+                <!-- Game Mode -->
+                <div class="custom-dropdown" id="mode-dropdown">
+                  <div class="dropdown-selected">
+                    <span id="mode-selected-text">1 Player</span>
+                    <span class="dropdown-arrow">▼</span>
+                  </div>
+                  <div class="dropdown-list">
+                    <div class="dropdown-item active" data-value="none">1 Player</div>
+                    <div class="dropdown-item" data-value="shared">2P Shared</div>
+                    <div class="dropdown-item" data-value="split">2P Split</div>
+                  </div>
+                </div>
+
+                <!-- Speed -->
+                <div class="custom-dropdown" id="speed-dropdown">
+                  <div class="dropdown-selected">
+                    <span id="speed-selected-text">Speed: Normal</span>
+                    <span class="dropdown-arrow">▼</span>
+                  </div>
+                  <div class="dropdown-list">
+                    <div class="dropdown-item" data-value="slow">Slow</div>
+                    <div class="dropdown-item active" data-value="normal">Normal</div>
+                    <div class="dropdown-item" data-value="fast">Fast</div>
+                    <div class="dropdown-item" data-value="insane">Insane</div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Wall Toggles -->
+              <div class="toggle-container" style="flex-wrap: wrap;">
+                <div class="toggle-item">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="walls-toggle">
+                    <span class="slider"></span>
+                  </label>
+                  <span class="toggle-label">Enable Random Walls</span>
+                </div>
+                
+                <div class="toggle-item">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="invisiwall-toggle">
+                    <span class="slider"></span>
+                  </label>
+                  <span class="toggle-label">Invisiwall (Pass Through & Lose Pts)</span>
+                </div>
+                
+                <div class="toggle-item">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="head2head-toggle">
+                    <span class="slider"></span>
+                  </label>
+                  <span class="toggle-label">Head 2 Head (PvP Kills)</span>
+                </div>
+                
+                <div class="toggle-item">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="mobile-mode-toggle">
+                    <span class="slider"></span>
+                  </label>
+                  <span class="toggle-label">Mobile Mode</span>
+                </div>
+              </div>
+
+              <!-- Setup Boxes -->
+              <div class="players-container">
+                <div class="player-box p1-setup">
+                  <span class="player-label p1-label">PLAYER 1</span>
+                  <input type="text" id="player-name-input" placeholder="Name..." maxlength="12" autocomplete="off" />
+                  
+                  <div class="color-picker" id="p1-colors">
+                    <div class="c-swatch active" data-color="green" style="--c: #64ffaa;"></div>
+                    <div class="c-swatch" data-color="purple" style="--c: #c764ff;"></div>
+                    <div class="c-swatch" data-color="cyan" style="--c: #32e6ff;"></div>
+                    <div class="c-swatch" data-color="yellow" style="--c: #ffdc32;"></div>
+                    <div class="c-swatch" data-color="pink" style="--c: #ff6496;"></div>
+                  </div>
+
+                  <div class="controls-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></div>
+                </div>
+
+                <div class="player-box p2-setup hidden" id="p2-setup-box">
+                  <span class="player-label p2-label">PLAYER 2</span>
+                  <input type="text" id="player2-name-input" placeholder="Name..." maxlength="12" autocomplete="off" />
+                  
+                  <div class="color-picker" id="p2-colors">
+                    <div class="c-swatch disabled" data-color="green" style="--c: #64ffaa;"></div>
+                    <div class="c-swatch active" data-color="purple" style="--c: #c764ff;"></div>
+                    <div class="c-swatch" data-color="cyan" style="--c: #32e6ff;"></div>
+                    <div class="c-swatch" data-color="yellow" style="--c: #ffdc32;"></div>
+                    <div class="c-swatch" data-color="pink" style="--c: #ff6496;"></div>
+                  </div>
+
+                  <div class="controls-hint"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></div>
+                </div>
+              </div>
+              
+              <button id="start-btn" class="game-btn">START GAME</button>
+            </div>
+
+            <div id="game-over-screen" class="hidden">
+              <div class="overlay-icon">💀</div>
+              <h2>Game Over!</h2>
+              <div id="winner-announcement-container">
+                <!-- Graffiti winner will be injected here -->
+              </div>
+              <p id="final-score-text">Score: 0</p>
+              <p id="new-best" class="hidden glow-text">🎉 New High Score!</p>
+              <button id="restart-btn" class="game-btn">PLAY AGAIN</button>
+            </div>
+
+            <div id="pause-screen" class="hidden">
+              <div class="overlay-icon">⏸️</div>
+              <h2>Paused</h2>
+              <p>Press <kbd>Space</kbd> or <kbd>P</kbd> to resume</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <aside id="leaderboard-panel">
+        <h3>🏆 LEADERBOARD</h3>
+        <ul id="leaderboard-list"></ul>
+      </aside>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls" class="hidden">
+      <div class="m-row">
+        <button class="m-btn" id="m-up">▲</button>
+      </div>
+      <div class="m-row">
+        <button class="m-btn" id="m-left">◀</button>
+        <button class="m-btn" id="m-down">▼</button>
+        <button class="m-btn" id="m-right">▶</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ❌⭕ TIC TAC TOE APP -->
+  <main id="ttt-app" class="app-container hidden">
+    <header class="ttt-header">
+      <h1>❌ TIC TAC TOE ⭕</h1>
+    </header>
+    
+    <div id="ttt-content">
+      <div id="ttt-board-container">
+        <div id="ttt-status">Player 1's Turn (X)</div>
+        <div id="ttt-board">
+          <div class="ttt-cell" data-idx="0"></div>
+          <div class="ttt-cell" data-idx="1"></div>
+          <div class="ttt-cell" data-idx="2"></div>
+          <div class="ttt-cell" data-idx="3"></div>
+          <div class="ttt-cell" data-idx="4"></div>
+          <div class="ttt-cell" data-idx="5"></div>
+          <div class="ttt-cell" data-idx="6"></div>
+          <div class="ttt-cell" data-idx="7"></div>
+          <div class="ttt-cell" data-idx="8"></div>
+        </div>
+        <button id="ttt-reset-btn" class="game-btn ttt-btn">RESTART GAME</button>
+      </div>
+
+      <div class="players-container ttt-setup box-dark">
+        <div class="player-box p1-setup">
+          <span class="player-label p1-label">PLAYER 1 (X)</span>
+          <input type="text" id="ttt-p1-input" value="Player 1" maxlength="12" autocomplete="off" />
+        </div>
+        <div class="player-box p2-setup">
+          <span class="player-label p2-label">PLAYER 2 (O)</span>
+          <input type="text" id="ttt-p2-input" value="Player 2" maxlength="12" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+  <script src="ttt.js"></script>
+</body>
+</html>
