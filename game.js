@@ -56,12 +56,6 @@ const wallsToggle    = document.getElementById('walls-toggle');
 const invisiwallToggle = document.getElementById('invisiwall-toggle');
 const h2hContainer   = document.getElementById('head2head-container');
 const h2hToggle      = document.getElementById('head2head-toggle');
-const mobileModeToggle = document.getElementById('mobile-mode-toggle');
-const mobileControlsContainer = document.getElementById('mobile-controls');
-const mUp = document.getElementById('m-up');
-const mDown = document.getElementById('m-down');
-const mLeft = document.getElementById('m-left');
-const mRight = document.getElementById('m-right');
 
 canvas.width  = CANVAS_PX; canvas.height = CANVAS_PX;
 canvas2.width = CANVAS_PX; canvas2.height = CANVAS_PX;
@@ -645,55 +639,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 startBtn.addEventListener('click', startGame); restartBtn.addEventListener('click', startGame);
-
-// ── Mobile Controls Logic ─────────────────────────
-mobileModeToggle.addEventListener('change', () => {
-  const isMobile = mobileModeToggle.checked;
-  mobileControlsContainer.classList.toggle('hidden', !isMobile);
-  document.body.classList.toggle('mobile-layout', isMobile);
-});
-
-mUp.addEventListener('touchstart', (e) => { e.preventDefault(); if (dir1.y !== 1) nextDir1 = { x: 0, y: -1 }; }, {passive: false});
-mDown.addEventListener('touchstart', (e) => { e.preventDefault(); if (dir1.y !== -1) nextDir1 = { x: 0, y: 1 }; }, {passive: false});
-mLeft.addEventListener('touchstart', (e) => { e.preventDefault(); if (dir1.x !== 1) nextDir1 = { x: -1, y: 0 }; }, {passive: false});
-mRight.addEventListener('touchstart', (e) => { e.preventDefault(); if (dir1.x !== -1) nextDir1 = { x: 1, y: 0 }; }, {passive: false});
-
-// Click fallbacks for desktop testing of mobile mode
-mUp.addEventListener('mousedown', () => { if (dir1.y !== 1) nextDir1 = { x: 0, y: -1 }; });
-mDown.addEventListener('mousedown', () => { if (dir1.y !== -1) nextDir1 = { x: 0, y: 1 }; });
-mLeft.addEventListener('mousedown', () => { if (dir1.x !== 1) nextDir1 = { x: -1, y: 0 }; });
-mRight.addEventListener('mousedown', () => { if (dir1.x !== -1) nextDir1 = { x: 1, y: 0 }; });
-
-// Swipe Detection
-let touchStartX = 0;
-let touchStartY = 0;
-
-document.addEventListener('touchstart', (e) => {
-  if (!mobileModeToggle.checked || gameState !== 'playing') return;
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, {passive: true});
-
-document.addEventListener('touchend', (e) => {
-  if (!mobileModeToggle.checked || gameState !== 'playing') return;
-  const touchEndX = e.changedTouches[0].clientX;
-  const touchEndY = e.changedTouches[0].clientY;
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
-
-  if (Math.abs(dx) > Math.abs(dy)) {
-    if (Math.abs(dx) > 30) { // threshold
-      if (dx > 0 && dir1.x !== -1) nextDir1 = { x: 1, y: 0 };
-      else if (dx < 0 && dir1.x !== 1) nextDir1 = { x: -1, y: 0 };
-    }
-  } else {
-    if (Math.abs(dy) > 30) {
-      if (dy > 0 && dir1.y !== -1) nextDir1 = { x: 0, y: 1 };
-      else if (dy < 0 && dir1.y !== 1) nextDir1 = { x: 0, y: -1 };
-    }
-  }
-}, {passive: true});
-
 
 // ── Color Selectors UI ──────────────────────────────
 const p1Swatches = document.querySelectorAll('#p1-colors .c-swatch');
