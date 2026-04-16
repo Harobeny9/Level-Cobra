@@ -79,9 +79,11 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 60px 20px 40px;
   position: relative;
   z-index: 1;
+  overflow-y: auto;
 }
 
 .hidden { display: none !important; }
@@ -412,6 +414,71 @@ kbd { display: inline-block; background: rgba(255, 255, 255, 0.08); border: 1px 
 #m-left { box-shadow: -4px 0 15px rgba(100, 255, 170, 0.1); }
 #m-right { box-shadow: 4px 0 15px rgba(100, 255, 170, 0.1); }
 
+/* ── Mobile Layout Specific Overrides ──────────────── */
+.mobile-layout #main-layout {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-layout #leaderboard-panel {
+  display: none;
+}
+
+.mobile-layout #score-panel {
+  transform: scale(0.9);
+}
+
+.mobile-layout #game-header h1 {
+  font-size: 1.4rem;
+}
+
+.mobile-layout .canvas-wrapper {
+  max-width: 95vw;
+  max-height: 95vw;
+}
+
+.mobile-layout #game-canvas, 
+.mobile-layout #game-canvas-2 {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.mobile-layout #mobile-controls {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  margin-top: 20px;
+  transform: none;
+}
+
+.mobile-layout #game-switcher {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
+  width: max-content;
+}
+
+.mobile-layout .players-container {
+  flex-direction: column;
+  align-items: center;
+}
+
+.mobile-layout .player-box {
+  width: 100%;
+  max-width: 280px;
+}
+
+.mobile-layout #overlay-content {
+  padding: 10px;
+}
+
+.mobile-layout h2 {
+  font-size: 1.6rem;
+}
+
 /* Responsive adjustments for mobile mode */
 @media (max-width: 800px) {
   #main-layout {
@@ -435,7 +502,16 @@ kbd { display: inline-block; background: rgba(255, 255, 255, 0.08); border: 1px 
     transform: translateX(50%);
     bottom: 20px;
   }
+  
+  #game-canvas, #game-canvas-2 {
+    width: 100% !important;
+    height: auto !important;
+  }
+  .canvas-wrapper {
+    max-width: 95vw;
+  }
 }
+
 
 @media (max-width: 500px) {
   #ttt-board {

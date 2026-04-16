@@ -648,7 +648,9 @@ startBtn.addEventListener('click', startGame); restartBtn.addEventListener('clic
 
 // ── Mobile Controls Logic ─────────────────────────
 mobileModeToggle.addEventListener('change', () => {
-  mobileControlsContainer.classList.toggle('hidden', !mobileModeToggle.checked);
+  const isMobile = mobileModeToggle.checked;
+  mobileControlsContainer.classList.toggle('hidden', !isMobile);
+  document.body.classList.toggle('mobile-layout', isMobile);
 });
 
 mUp.addEventListener('touchstart', (e) => { e.preventDefault(); if (dir1.y !== 1) nextDir1 = { x: 0, y: -1 }; }, {passive: false});
