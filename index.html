@@ -110,12 +110,20 @@
                   <span class="toggle-label">Invisiwall (Pass Through & Lose Pts)</span>
                 </div>
                 
-                <div class="toggle-item hidden" id="head2head-container">
+                <div class="toggle-item">
                   <label class="toggle-switch">
                     <input type="checkbox" id="head2head-toggle">
                     <span class="slider"></span>
                   </label>
                   <span class="toggle-label">Head 2 Head (PvP Kills)</span>
+                </div>
+                
+                <div class="toggle-item">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="mobile-mode-toggle">
+                    <span class="slider"></span>
+                  </label>
+                  <span class="toggle-label">Mobile Mode</span>
                 </div>
               </div>
 
@@ -179,6 +187,18 @@
         <h3>🏆 LEADERBOARD</h3>
         <ul id="leaderboard-list"></ul>
       </aside>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls" class="hidden">
+      <div class="m-row">
+        <button class="m-btn" id="m-up">▲</button>
+      </div>
+      <div class="m-row">
+        <button class="m-btn" id="m-left">◀</button>
+        <button class="m-btn" id="m-down">▼</button>
+        <button class="m-btn" id="m-right">▶</button>
+      </div>
     </div>
   </main>
 

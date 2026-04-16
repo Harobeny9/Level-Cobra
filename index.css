@@ -364,3 +364,91 @@ kbd { display: inline-block; background: rgba(255, 255, 255, 0.08); border: 1px 
 .ttt-btn:hover { box-shadow: 0 6px 32px rgba(199, 100, 255, 0.5); }
 
 .box-dark { background: var(--bg-card); border: 1px solid rgba(199, 100, 255, 0.2); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); flex-direction: column; justify-content: center; }
+
+/* ── Mobile Controls ─────────────────────────────── */
+#mobile-controls {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+}
+
+.m-row {
+  display: flex;
+  gap: 10px;
+}
+
+.m-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.m-btn:active {
+  background: var(--accent);
+  color: #000;
+  transform: scale(0.9);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+#m-up { box-shadow: 0 -4px 15px rgba(100, 255, 170, 0.1); }
+#m-down { box-shadow: 0 4px 15px rgba(100, 255, 170, 0.1); }
+#m-left { box-shadow: -4px 0 15px rgba(100, 255, 170, 0.1); }
+#m-right { box-shadow: 4px 0 15px rgba(100, 255, 170, 0.1); }
+
+/* Responsive adjustments for mobile mode */
+@media (max-width: 800px) {
+  #main-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+  #leaderboard-panel {
+    display: none;
+  }
+  
+  #ttt-board {
+    grid-template-columns: repeat(3, 85px);
+    grid-template-rows: repeat(3, 85px);
+  }
+  .ttt-cell {
+    font-size: 3rem;
+  }
+  
+  #mobile-controls {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  #ttt-board {
+    grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(3, 70px);
+  }
+  .ttt-cell {
+    font-size: 2.5rem;
+  }
+  
+  .game-header h1 {
+    font-size: 1.4rem;
+  }
+}
+
+
