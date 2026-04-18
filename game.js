@@ -1,21 +1,14 @@
 // ── Game Switcher ──────────────────────────────────
 const btnSwitchSnake = document.getElementById('switch-snake');
 const btnSwitchTTT = document.getElementById('switch-ttt');
-const btnSwitchMobileMode = document.getElementById('switch-mobile-mode');
 const snakeApp = document.getElementById('snake-app');
 const tttApp = document.getElementById('ttt-app');
-const mobileControls = document.getElementById('mobile-controls');
-const mobileUpBtn = document.getElementById('m-up');
-const mobileDownBtn = document.getElementById('m-down');
-const mobileLeftBtn = document.getElementById('m-left');
-const mobileRightBtn = document.getElementById('m-right');
 
 btnSwitchSnake.addEventListener('click', () => {
   btnSwitchSnake.classList.add('active');
   btnSwitchTTT.classList.remove('active');
   snakeApp.classList.remove('hidden');
   tttApp.classList.add('hidden');
-  updateMobileControlsVisibility();
 });
 
 btnSwitchTTT.addEventListener('click', () => {
@@ -23,14 +16,7 @@ btnSwitchTTT.addEventListener('click', () => {
   btnSwitchSnake.classList.remove('active');
   tttApp.classList.remove('hidden');
   snakeApp.classList.add('hidden');
-  updateMobileControlsVisibility();
 });
-
-if (btnSwitchMobileMode) {
-  btnSwitchMobileMode.addEventListener('click', () => {
-    setGlobalMobileMode(!forceMobileMode);
-  });
-}
 
 // ── Constants & Variables ──────────────────────────
 const GRID_SIZE = 20;
@@ -48,7 +34,6 @@ const NAME_KEY_P2 = 'snake-player2-name';
 const NAME_DEFAULT_P1 = 'Player 1';
 const NAME_DEFAULT_P2 = 'Player 2';
 const LEADERBOARD_RESET_VERSION = 'snake-lb-reset-v1';
-const MOBILE_MODE_KEY = 'global-mobile-mode';
 const BANNED_NAME_PATTERNS = [
   /nigg/i, /fag/i, /retard/i, /cunt/i, /kike/i, /spic/i, /chink/i, /paki/i, /gook/i,
   /fuck/i, /shit/i, /bitch/i, /asshole/i, /bastard/i, /whore/i, /slut/i, /dick/i, /pussy/i, /cock/i,
@@ -115,28 +100,13 @@ let leaderboard = [];
 let highScore = parseInt(localStorage.getItem('snake-hi') || '0', 10);
 highScoreEl.textContent = highScore;
 let supabaseClient = null;
-let forceMobileMode = localStorage.getItem(MOBILE_MODE_KEY) === '1';
 
 function detectHardwareMobile() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 }
 
 function getCurrentDeviceType() {
-  return (forceMobileMode || detectHardwareMobile()) ? 'Mobile' : 'Laptop';
-}
-
-function updateMobileControlsVisibility() {
-  if (!mobileControls) return;
-  const snakeVisible = !snakeApp.classList.contains('hidden');
-  mobileControls.classList.toggle('hidden', !(forceMobileMode && snakeVisible));
-}
-
-function setGlobalMobileMode(enabled) {
-  forceMobileMode = !!enabled;
-  document.body.classList.toggle('force-mobile', forceMobileMode);
-  if (btnSwitchMobileMode) btnSwitchMobileMode.classList.toggle('active', forceMobileMode);
-  localStorage.setItem(MOBILE_MODE_KEY, forceMobileMode ? '1' : '0');
-  updateMobileControlsVisibility();
+  return detectHardwareMobile() ? 'Mobile' : 'Laptop';
 }
 
 // ── Custom Dropdowns ───────────────────────────────
@@ -923,29 +893,6 @@ function togglePause() {
 function showOverlay(show) { overlay.classList.toggle('visible', show); }
 
 // ── Input ──────────────────────────────────────────
-function setP1DirectionFromTouch(direction) {
-  if (gameState !== 'playing' || p1Dead) return;
-  if (direction === 'up' && dir1.y !== 1) nextDir1 = { x: 0, y: -1 };
-  else if (direction === 'down' && dir1.y !== -1) nextDir1 = { x: 0, y: 1 };
-  else if (direction === 'left' && dir1.x !== 1) nextDir1 = { x: -1, y: 0 };
-  else if (direction === 'right' && dir1.x !== -1) nextDir1 = { x: 1, y: 0 };
-}
-
-function bindMobileDirection(btn, direction) {
-  if (!btn) return;
-  const handler = (e) => {
-    e.preventDefault();
-    setP1DirectionFromTouch(direction);
-  };
-  btn.addEventListener('touchstart', handler, { passive: false });
-  btn.addEventListener('click', handler);
-}
-
-bindMobileDirection(mobileUpBtn, 'up');
-bindMobileDirection(mobileDownBtn, 'down');
-bindMobileDirection(mobileLeftBtn, 'left');
-bindMobileDirection(mobileRightBtn, 'right');
-
 document.addEventListener('keydown', (e) => {
   if (gameState === 'playing' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',' ','w','a','s','d','W','A','S','D'].includes(e.key)) e.preventDefault();
   
@@ -1025,7 +972,6 @@ playerNameInput.addEventListener('blur', () => tryPersistInputName(playerNameInp
 player2NameInput.addEventListener('blur', () => tryPersistInputName(player2NameInput, NAME_KEY_P2));
 
 hydrateSavedNames();
-setGlobalMobileMode(forceMobileMode);
 playerNameInput.focus();
 updateColorUI();
 initGame(); render();

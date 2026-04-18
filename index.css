@@ -73,12 +73,6 @@ html, body {
   color: var(--p2-color);
   box-shadow: 0 4px 16px rgba(199, 100, 255, 0.3);
 }
-#switch-mobile-mode.active {
-  background: rgba(50, 230, 255, 0.12);
-  border-color: #32e6ff;
-  color: #32e6ff;
-  box-shadow: 0 4px 16px rgba(50, 230, 255, 0.28);
-}
 
 .app-container {
   display: flex;
@@ -382,128 +376,7 @@ kbd { display: inline-block; background: rgba(255, 255, 255, 0.08); border: 1px 
 
 .box-dark { background: var(--bg-card); border: 1px solid rgba(199, 100, 255, 0.2); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); flex-direction: column; justify-content: center; }
 
-/* ── Mobile Controls ─────────────────────────────── */
-#mobile-controls {
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  z-index: 100;
-}
 
-.m-row {
-  display: flex;
-  gap: 10px;
-}
-
-.m-btn {
-  width: 70px;
-  height: 70px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-.m-btn:active {
-  background: var(--accent);
-  color: #000;
-  transform: scale(0.9);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-
-#m-up { box-shadow: 0 -4px 15px rgba(100, 255, 170, 0.1); }
-#m-down { box-shadow: 0 4px 15px rgba(100, 255, 170, 0.1); }
-#m-left { box-shadow: -4px 0 15px rgba(100, 255, 170, 0.1); }
-#m-right { box-shadow: 4px 0 15px rgba(100, 255, 170, 0.1); }
-
-/* Forced Portrait Mobile Mode */
-body.force-mobile {
-  overflow: auto;
-}
-
-body.force-mobile #game-switcher {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-body.force-mobile .switcher-btn {
-  padding: 8px 12px;
-  font-size: 0.82rem;
-}
-
-body.force-mobile .app-container {
-  justify-content: flex-start;
-  min-height: 100vh;
-  height: auto;
-  padding: 78px 10px 130px 10px;
-}
-
-body.force-mobile #game-header {
-  max-width: 420px;
-  width: 100%;
-  flex-direction: column;
-  gap: 10px;
-}
-
-body.force-mobile #main-layout,
-body.force-mobile #ttt-content {
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-body.force-mobile #canvases-container {
-  flex-direction: column;
-  align-items: center;
-}
-
-body.force-mobile #game-canvas,
-body.force-mobile #game-canvas-2 {
-  width: min(86vw, 390px);
-  height: auto;
-}
-
-body.force-mobile #leaderboard-panel {
-  width: min(92vw, 420px);
-  max-height: 290px;
-  min-width: 0;
-}
-
-body.force-mobile #ttt-board {
-  grid-template-columns: repeat(3, min(24vw, 90px));
-  grid-template-rows: repeat(3, min(24vw, 90px));
-  gap: 8px;
-}
-
-body.force-mobile .ttt-cell {
-  font-size: clamp(2rem, 10vw, 3.2rem);
-}
-
-body.force-mobile #mobile-controls {
-  position: fixed;
-  right: auto;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 16px;
-}
 
 /* Responsive adjustments for mobile mode */
 @media (max-width: 800px) {
