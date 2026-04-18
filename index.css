@@ -280,6 +280,13 @@ input[type="text"] {
 .p2-setup input:focus { border-color: var(--p2-color); box-shadow: 0 0 12px rgba(199, 100, 255, 0.35); color: var(--p2-color); }
 
 .controls-hint { font-size: 0.75rem; color: var(--text-secondary); }
+.name-validation-msg {
+  min-height: 20px;
+  margin: -8px 0 12px 0;
+  color: #ff8099;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
 kbd { display: inline-block; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px; padding: 2px 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-primary); margin: 0 2px; }
 
 /* ── Color Picker ────────────────────────────────── */

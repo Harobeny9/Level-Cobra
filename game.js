@@ -29,6 +29,16 @@ let SPEED_FLOOR = 60;
 const LEADERBOARD_TABLE = 'snake_scores';
 const SUPABASE_URL = (window.SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || '').trim();
+const NAME_KEY_P1 = 'snake-player1-name';
+const NAME_KEY_P2 = 'snake-player2-name';
+const NAME_DEFAULT_P1 = 'Player 1';
+const NAME_DEFAULT_P2 = 'Player 2';
+const BANNED_NAME_PATTERNS = [
+  /nigg/i, /fag/i, /retard/i, /cunt/i, /kike/i, /spic/i, /chink/i, /paki/i, /gook/i,
+  /fuck/i, /shit/i, /bitch/i, /asshole/i, /bastard/i, /whore/i, /slut/i, /dick/i, /pussy/i, /cock/i,
+  /rape/i, /rapist/i, /molest/i, /pedo/i,
+  /hitler/i, /nazi/i, /kkk/i, /terror/i
+];
 
 // ── DOM refs ───────────────────────────────────────
 const canvas       = document.getElementById('game-canvas');
@@ -55,6 +65,7 @@ const player2NameInput = document.getElementById('player2-name-input');
 const p2SetupBox   = document.getElementById('p2-setup-box');
 const leaderboardList = document.getElementById('leaderboard-list');
 const leaderboardStatusEl = document.getElementById('leaderboard-status');
+const nameValidationEl = document.getElementById('name-validation-msg');
 const winnerContainer = document.getElementById('winner-announcement-container');
 const wallsToggle    = document.getElementById('walls-toggle');
 const invisiwallToggle = document.getElementById('invisiwall-toggle');
@@ -149,6 +160,73 @@ setupDropdown('speed-dropdown', 'speed-selected-text', (speedVal) => {
   void refreshLeaderboard();
 });
 if (h2hContainer) h2hContainer.classList.add('hidden');
+
+// Name Persistence & Moderation
+function normalizeName(rawName) {
+  return (rawName || '').replace(/\s+/g, ' ').trim().slice(0, 12);
+}
+
+function canonicalizeForModeration(name) {
+  const map = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', '$': 's', '!': 'i' };
+  return name
+    .toLowerCase()
+    .split('')
+    .map(ch => map[ch] || ch)
+    .join('')
+    .replace(/[^a-z]/g, '');
+}
+
+function isNameAllowed(name) {
+  const canonical = canonicalizeForModeration(name);
+  return canonical.length > 0 && !BANNED_NAME_PATTERNS.some(pattern => pattern.test(canonical));
+}
+
+function setNameValidationMessage(message) {
+  if (!nameValidationEl) return;
+  if (message) {
+    nameValidationEl.textContent = message;
+    nameValidationEl.classList.remove('hidden');
+  } else {
+    nameValidationEl.textContent = '';
+    nameValidationEl.classList.add('hidden');
+  }
+}
+
+function hydrateSavedNames() {
+  const storedP1 = normalizeName(localStorage.getItem(NAME_KEY_P1)) || NAME_DEFAULT_P1;
+  const storedP2 = normalizeName(localStorage.getItem(NAME_KEY_P2)) || NAME_DEFAULT_P2;
+
+  playerNameInput.value = isNameAllowed(storedP1) ? storedP1 : NAME_DEFAULT_P1;
+  player2NameInput.value = isNameAllowed(storedP2) ? storedP2 : NAME_DEFAULT_P2;
+
+  localStorage.setItem(NAME_KEY_P1, playerNameInput.value);
+  localStorage.setItem(NAME_KEY_P2, player2NameInput.value);
+}
+
+function tryPersistInputName(inputEl, storageKey) {
+  const clean = normalizeName(inputEl.value);
+  if (!clean) return;
+  if (!isNameAllowed(clean)) {
+    setNameValidationMessage('That name is not allowed. Please choose a different one.');
+    return;
+  }
+  inputEl.value = clean;
+  localStorage.setItem(storageKey, clean);
+  setNameValidationMessage('');
+}
+
+function resolvePlayerName(inputEl, storageKey, fallbackName, playerLabel) {
+  const clean = normalizeName(inputEl.value) || fallbackName;
+  if (!isNameAllowed(clean)) {
+    setNameValidationMessage(`${playerLabel} name is not allowed. Please choose a different name.`);
+    inputEl.focus();
+    return null;
+  }
+  inputEl.value = clean;
+  localStorage.setItem(storageKey, clean);
+  setNameValidationMessage('');
+  return clean;
+}
 
 
 // ── Leaderboard ────────────────────────────────────
@@ -713,8 +791,17 @@ function tick() {
 }
 
 function startGame() {
-  currentPlayer1 = playerNameInput.value.trim() || 'Player 1';
-  if (multiMode !== 'none') currentPlayer2 = player2NameInput.value.trim() || 'Player 2';
+  const p1Name = resolvePlayerName(playerNameInput, NAME_KEY_P1, NAME_DEFAULT_P1, 'Player 1');
+  if (!p1Name) return;
+  currentPlayer1 = p1Name;
+
+  if (multiMode !== 'none') {
+    const p2Name = resolvePlayerName(player2NameInput, NAME_KEY_P2, NAME_DEFAULT_P2, 'Player 2');
+    if (!p2Name) return;
+    currentPlayer2 = p2Name;
+  } else {
+    currentPlayer2 = NAME_DEFAULT_P2;
+  }
   
   initGame(); gameState = 'playing'; showOverlay(false);
   render(); loopId = setTimeout(tick, speed);
@@ -842,6 +929,14 @@ p2Swatches.forEach(sw => sw.addEventListener('click', () => {
     updateColorUI();
 }));
 
+playerNameInput.addEventListener('input', () => setNameValidationMessage(''));
+player2NameInput.addEventListener('input', () => setNameValidationMessage(''));
+playerNameInput.addEventListener('change', () => tryPersistInputName(playerNameInput, NAME_KEY_P1));
+player2NameInput.addEventListener('change', () => tryPersistInputName(player2NameInput, NAME_KEY_P2));
+playerNameInput.addEventListener('blur', () => tryPersistInputName(playerNameInput, NAME_KEY_P1));
+player2NameInput.addEventListener('blur', () => tryPersistInputName(player2NameInput, NAME_KEY_P2));
+
+hydrateSavedNames();
 playerNameInput.focus();
 updateColorUI();
 initGame(); render();
