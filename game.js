@@ -26,6 +26,9 @@ const SPEED_STEP  = 2;
 
 let BASE_SPEED = 130;
 let SPEED_FLOOR = 60;
+const LEADERBOARD_TABLE = 'snake_scores';
+const SUPABASE_URL = (window.SUPABASE_URL || '').trim();
+const SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || '').trim();
 
 // ── DOM refs ───────────────────────────────────────
 const canvas       = document.getElementById('game-canvas');
@@ -51,6 +54,7 @@ const playerNameInput = document.getElementById('player-name-input');
 const player2NameInput = document.getElementById('player2-name-input');
 const p2SetupBox   = document.getElementById('p2-setup-box');
 const leaderboardList = document.getElementById('leaderboard-list');
+const leaderboardStatusEl = document.getElementById('leaderboard-status');
 const winnerContainer = document.getElementById('winner-announcement-container');
 const wallsToggle    = document.getElementById('walls-toggle');
 const invisiwallToggle = document.getElementById('invisiwall-toggle');
@@ -81,6 +85,7 @@ let particles2 = [];
 let leaderboard = JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
 let highScore = parseInt(localStorage.getItem('snake-hi') || '0', 10);
 highScoreEl.textContent = highScore;
+let supabaseClient = null;
 
 // ── Custom Dropdowns ───────────────────────────────
 function setupDropdown(dropdownId, textElementId, onChangeCallback) {
@@ -115,17 +120,17 @@ setupDropdown('mode-dropdown', 'mode-selected-text', (mode) => {
     p2SetupBox.classList.add('hidden');
     p2ScoreBox.classList.add('hidden');
     canvasWrapper2.classList.add('hidden');
-    h2hContainer.classList.add('hidden');
+    if (h2hContainer) h2hContainer.classList.add('hidden');
   } else if (mode === 'shared') {
     p2SetupBox.classList.remove('hidden');
     p2ScoreBox.classList.remove('hidden');
     canvasWrapper2.classList.add('hidden');
-    h2hContainer.classList.remove('hidden');
+    if (h2hContainer) h2hContainer.classList.remove('hidden');
   } else if (mode === 'split') {
     p2SetupBox.classList.remove('hidden');
     p2ScoreBox.classList.remove('hidden');
     canvasWrapper2.classList.remove('hidden');
-    h2hContainer.classList.add('hidden');
+    if (h2hContainer) h2hContainer.classList.add('hidden');
   }
   multiMode = mode;
   // Let updateColorUI exist
@@ -138,9 +143,17 @@ setupDropdown('speed-dropdown', 'speed-selected-text', (speedVal) => {
   else if (speedVal === 'fast') { BASE_SPEED = 90; SPEED_FLOOR = 40; }
   else if (speedVal === 'insane') { BASE_SPEED = 50; SPEED_FLOOR = 20; }
 });
+if (h2hContainer) h2hContainer.classList.add('hidden');
 
 
 // ── Leaderboard ────────────────────────────────────
+function setLeaderboardStatus(message, mode = 'offline') {
+  if (!leaderboardStatusEl) return;
+  leaderboardStatusEl.textContent = message;
+  leaderboardStatusEl.classList.remove('online', 'offline');
+  leaderboardStatusEl.classList.add(mode === 'online' ? 'online' : 'offline');
+}
+
 function updateLeaderboardUI() {
   leaderboardList.innerHTML = '';
   leaderboard.sort((a, b) => b.score - a.score);
@@ -154,14 +167,92 @@ function updateLeaderboardUI() {
     leaderboardList.appendChild(li);
   });
 }
-updateLeaderboardUI();
 
-function saveToLeaderboard(name, finalScore) {
+function saveToLeaderboardLocal(name, finalScore) {
   if (finalScore === 0) return;
   const existing = leaderboard.find(e => e.name === name);
   if (existing) { if (finalScore > existing.score) existing.score = finalScore; } 
   else { leaderboard.push({ name, score: finalScore }); }
+  localStorage.setItem('snake-leaderboard', JSON.stringify(leaderboard));
 }
+
+function initializeSupabase() {
+  if (!window.supabase || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    setLeaderboardStatus('Local leaderboard');
+    return;
+  }
+  const { createClient } = window.supabase;
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+async function loadOnlineLeaderboard() {
+  if (!supabaseClient) {
+    leaderboard = JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
+    updateLeaderboardUI();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from(LEADERBOARD_TABLE)
+    .select('name, score, updated_at')
+    .order('score', { ascending: false })
+    .order('updated_at', { ascending: true })
+    .limit(10);
+
+  if (error) {
+    console.error('Failed to load online leaderboard:', error);
+    setLeaderboardStatus('Cloud offline - showing local', 'offline');
+    leaderboard = JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
+  } else {
+    leaderboard = (data || []).map(row => ({ name: row.name, score: row.score }));
+    localStorage.setItem('snake-leaderboard', JSON.stringify(leaderboard));
+    setLeaderboardStatus('Global leaderboard (Supabase)', 'online');
+  }
+
+  updateLeaderboardUI();
+}
+
+async function upsertOnlineScore(name, score) {
+  if (!supabaseClient || score <= 0) return;
+
+  const { data: existing, error: existingError } = await supabaseClient
+    .from(LEADERBOARD_TABLE)
+    .select('score')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (existingError && existingError.code !== 'PGRST116') {
+    throw existingError;
+  }
+
+  if (existing && existing.score >= score) return;
+
+  const payload = { name, score, updated_at: new Date().toISOString() };
+  const { error } = await supabaseClient
+    .from(LEADERBOARD_TABLE)
+    .upsert(payload, { onConflict: 'name' });
+
+  if (error) throw error;
+}
+
+async function syncScoresOnline(entries) {
+  if (!supabaseClient) return;
+
+  const validEntries = entries.filter(entry => entry.score > 0);
+  if (validEntries.length === 0) return;
+
+  try {
+    await Promise.all(validEntries.map(entry => upsertOnlineScore(entry.name, entry.score)));
+    await loadOnlineLeaderboard();
+  } catch (error) {
+    console.error('Failed to sync online scores:', error);
+    setLeaderboardStatus('Cloud save failed - using local', 'offline');
+  }
+}
+
+initializeSupabase();
+updateLeaderboardUI();
+void loadOnlineLeaderboard();
 
 // ── Helpers ────────────────────────────────────────
 function randomCell() { return Math.floor(Math.random() * GRID_SIZE); }
@@ -567,9 +658,13 @@ function gameOver() {
   const isNewBest = maxScore > highScore;
   if (isNewBest) { highScore = maxScore; localStorage.setItem('snake-hi', highScore); highScoreEl.textContent = highScore; }
 
-  saveToLeaderboard(currentPlayer1, score1);
-  if (multiMode !== 'none') saveToLeaderboard(currentPlayer2, score2);
-  localStorage.setItem('snake-leaderboard', JSON.stringify(leaderboard)); updateLeaderboardUI();
+  saveToLeaderboardLocal(currentPlayer1, score1);
+  if (multiMode !== 'none') saveToLeaderboardLocal(currentPlayer2, score2);
+  updateLeaderboardUI();
+  void syncScoresOnline([
+    { name: currentPlayer1, score: score1 },
+    { name: currentPlayer2, score: multiMode !== 'none' ? score2 : 0 }
+  ]);
 
   winnerContainer.innerHTML = '';
   
