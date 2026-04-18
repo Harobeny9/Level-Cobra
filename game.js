@@ -33,6 +33,7 @@ const NAME_KEY_P1 = 'snake-player1-name';
 const NAME_KEY_P2 = 'snake-player2-name';
 const NAME_DEFAULT_P1 = 'Player 1';
 const NAME_DEFAULT_P2 = 'Player 2';
+const LEADERBOARD_RESET_VERSION = 'snake-lb-reset-v1';
 const BANNED_NAME_PATTERNS = [
   /nigg/i, /fag/i, /retard/i, /cunt/i, /kike/i, /spic/i, /chink/i, /paki/i, /gook/i,
   /fuck/i, /shit/i, /bitch/i, /asshole/i, /bastard/i, /whore/i, /slut/i, /dick/i, /pussy/i, /cock/i,
@@ -203,11 +204,17 @@ function hydrateSavedNames() {
   localStorage.setItem(NAME_KEY_P2, player2NameInput.value);
 }
 
+function resetLeaderboardLocalDataIfNeeded() {
+  if (localStorage.getItem(LEADERBOARD_RESET_VERSION) === 'done') return;
+  localStorage.removeItem('snake-leaderboard');
+  localStorage.setItem(LEADERBOARD_RESET_VERSION, 'done');
+}
+
 function tryPersistInputName(inputEl, storageKey) {
   const clean = normalizeName(inputEl.value);
   if (!clean) return;
   if (!isNameAllowed(clean)) {
-    setNameValidationMessage('That name is not allowed. Please choose a different one.');
+    setNameValidationMessage('r u serious bro 😡');
     return;
   }
   inputEl.value = clean;
@@ -218,7 +225,7 @@ function tryPersistInputName(inputEl, storageKey) {
 function resolvePlayerName(inputEl, storageKey, fallbackName, playerLabel) {
   const clean = normalizeName(inputEl.value) || fallbackName;
   if (!isNameAllowed(clean)) {
-    setNameValidationMessage(`${playerLabel} name is not allowed. Please choose a different name.`);
+    setNameValidationMessage('r u serious bro 😡');
     inputEl.focus();
     return null;
   }
@@ -400,6 +407,7 @@ async function refreshLeaderboard() {
 }
 
 initializeSupabase();
+resetLeaderboardLocalDataIfNeeded();
 loadLocalLeaderboardEntries();
 leaderboard = getFilteredLeaderboard();
 updateLeaderboardUI();
