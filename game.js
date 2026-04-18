@@ -1,14 +1,21 @@
 // ── Game Switcher ──────────────────────────────────
 const btnSwitchSnake = document.getElementById('switch-snake');
 const btnSwitchTTT = document.getElementById('switch-ttt');
+const btnSwitchMobileMode = document.getElementById('switch-mobile-mode');
 const snakeApp = document.getElementById('snake-app');
 const tttApp = document.getElementById('ttt-app');
+const mobileControls = document.getElementById('mobile-controls');
+const mobileUpBtn = document.getElementById('m-up');
+const mobileDownBtn = document.getElementById('m-down');
+const mobileLeftBtn = document.getElementById('m-left');
+const mobileRightBtn = document.getElementById('m-right');
 
 btnSwitchSnake.addEventListener('click', () => {
   btnSwitchSnake.classList.add('active');
   btnSwitchTTT.classList.remove('active');
   snakeApp.classList.remove('hidden');
   tttApp.classList.add('hidden');
+  updateMobileControlsVisibility();
 });
 
 btnSwitchTTT.addEventListener('click', () => {
@@ -16,7 +23,14 @@ btnSwitchTTT.addEventListener('click', () => {
   btnSwitchSnake.classList.remove('active');
   tttApp.classList.remove('hidden');
   snakeApp.classList.add('hidden');
+  updateMobileControlsVisibility();
 });
+
+if (btnSwitchMobileMode) {
+  btnSwitchMobileMode.addEventListener('click', () => {
+    setGlobalMobileMode(!forceMobileMode);
+  });
+}
 
 // ── Constants & Variables ──────────────────────────
 const GRID_SIZE = 20;
@@ -34,6 +48,7 @@ const NAME_KEY_P2 = 'snake-player2-name';
 const NAME_DEFAULT_P1 = 'Player 1';
 const NAME_DEFAULT_P2 = 'Player 2';
 const LEADERBOARD_RESET_VERSION = 'snake-lb-reset-v1';
+const MOBILE_MODE_KEY = 'global-mobile-mode';
 const BANNED_NAME_PATTERNS = [
   /nigg/i, /fag/i, /retard/i, /cunt/i, /kike/i, /spic/i, /chink/i, /paki/i, /gook/i,
   /fuck/i, /shit/i, /bitch/i, /asshole/i, /bastard/i, /whore/i, /slut/i, /dick/i, /pussy/i, /cock/i,
@@ -100,6 +115,29 @@ let leaderboard = [];
 let highScore = parseInt(localStorage.getItem('snake-hi') || '0', 10);
 highScoreEl.textContent = highScore;
 let supabaseClient = null;
+let forceMobileMode = localStorage.getItem(MOBILE_MODE_KEY) === '1';
+
+function detectHardwareMobile() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+}
+
+function getCurrentDeviceType() {
+  return (forceMobileMode || detectHardwareMobile()) ? 'Mobile' : 'Laptop';
+}
+
+function updateMobileControlsVisibility() {
+  if (!mobileControls) return;
+  const snakeVisible = !snakeApp.classList.contains('hidden');
+  mobileControls.classList.toggle('hidden', !(forceMobileMode && snakeVisible));
+}
+
+function setGlobalMobileMode(enabled) {
+  forceMobileMode = !!enabled;
+  document.body.classList.toggle('force-mobile', forceMobileMode);
+  if (btnSwitchMobileMode) btnSwitchMobileMode.classList.toggle('active', forceMobileMode);
+  localStorage.setItem(MOBILE_MODE_KEY, forceMobileMode ? '1' : '0');
+  updateMobileControlsVisibility();
+}
 
 // ── Custom Dropdowns ───────────────────────────────
 function setupDropdown(dropdownId, textElementId, onChangeCallback) {
@@ -254,7 +292,8 @@ function normalizeLeaderboardEntry(entry) {
     name: (entry?.name || 'Player').toString().slice(0, 12),
     score: Number(entry?.score || 0),
     mode: entry?.mode || 'none',
-    speed: entry?.speed || 'normal'
+    speed: entry?.speed || 'normal',
+    device_type: entry?.device_type || 'Laptop'
   };
 }
 
@@ -297,7 +336,7 @@ function updateLeaderboardUI() {
   leaderboard.forEach((entry, idx) => {
     const li = document.createElement('li');
     li.className = `leaderboard-item rank-${idx + 1}`;
-    li.innerHTML = `<span class="lb-name">${idx + 1}. ${entry.name}</span> <span class="lb-score">${entry.score}</span>`;
+    li.innerHTML = `<span class="lb-name">${idx + 1}. ${entry.name} <span class="lb-device">(${entry.device_type})</span></span> <span class="lb-score">${entry.score}</span>`;
     leaderboardList.appendChild(li);
   });
 }
@@ -305,9 +344,14 @@ function updateLeaderboardUI() {
 function saveToLeaderboardLocal(name, finalScore, mode, speedVal) {
   if (finalScore === 0) return;
   if (!isNameAllowed(name)) return;
+  const deviceType = getCurrentDeviceType();
   const existing = leaderboardEntries.find(e => e.name === name && e.mode === mode && e.speed === speedVal);
-  if (existing) { if (finalScore > existing.score) existing.score = finalScore; } 
-  else { leaderboardEntries.push({ name, score: finalScore, mode, speed: speedVal }); }
+  if (existing) {
+    if (finalScore > existing.score) existing.score = finalScore;
+    existing.device_type = deviceType;
+  } else {
+    leaderboardEntries.push({ name, score: finalScore, mode, speed: speedVal, device_type: deviceType });
+  }
   saveLocalLeaderboardEntries();
   leaderboard = getFilteredLeaderboard(mode, speedVal);
 }
@@ -333,7 +377,7 @@ async function loadOnlineLeaderboard() {
 
   const { data, error } = await supabaseClient
     .from(LEADERBOARD_TABLE)
-    .select('name, score, mode, speed, updated_at')
+    .select('name, score, mode, speed, device_type, updated_at')
     .eq('mode', mode)
     .eq('speed', speedVal)
     .order('score', { ascending: false })
@@ -362,6 +406,7 @@ async function loadOnlineLeaderboard() {
 
 async function upsertOnlineScore(name, score, mode, speedVal) {
   if (!supabaseClient || score <= 0) return;
+  const deviceType = getCurrentDeviceType();
 
   const { data: existing, error: existingError } = await supabaseClient
     .from(LEADERBOARD_TABLE)
@@ -377,7 +422,14 @@ async function upsertOnlineScore(name, score, mode, speedVal) {
 
   if (existing && existing.score >= score) return;
 
-  const payload = { name, score, mode, speed: speedVal, updated_at: new Date().toISOString() };
+  const payload = {
+    name,
+    score,
+    mode,
+    speed: speedVal,
+    device_type: deviceType,
+    updated_at: new Date().toISOString()
+  };
   const { error } = await supabaseClient
     .from(LEADERBOARD_TABLE)
     .upsert(payload, { onConflict: 'name,mode,speed' });
@@ -871,6 +923,29 @@ function togglePause() {
 function showOverlay(show) { overlay.classList.toggle('visible', show); }
 
 // ── Input ──────────────────────────────────────────
+function setP1DirectionFromTouch(direction) {
+  if (gameState !== 'playing' || p1Dead) return;
+  if (direction === 'up' && dir1.y !== 1) nextDir1 = { x: 0, y: -1 };
+  else if (direction === 'down' && dir1.y !== -1) nextDir1 = { x: 0, y: 1 };
+  else if (direction === 'left' && dir1.x !== 1) nextDir1 = { x: -1, y: 0 };
+  else if (direction === 'right' && dir1.x !== -1) nextDir1 = { x: 1, y: 0 };
+}
+
+function bindMobileDirection(btn, direction) {
+  if (!btn) return;
+  const handler = (e) => {
+    e.preventDefault();
+    setP1DirectionFromTouch(direction);
+  };
+  btn.addEventListener('touchstart', handler, { passive: false });
+  btn.addEventListener('click', handler);
+}
+
+bindMobileDirection(mobileUpBtn, 'up');
+bindMobileDirection(mobileDownBtn, 'down');
+bindMobileDirection(mobileLeftBtn, 'left');
+bindMobileDirection(mobileRightBtn, 'right');
+
 document.addEventListener('keydown', (e) => {
   if (gameState === 'playing' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',' ','w','a','s','d','W','A','S','D'].includes(e.key)) e.preventDefault();
   
@@ -950,6 +1025,7 @@ playerNameInput.addEventListener('blur', () => tryPersistInputName(playerNameInp
 player2NameInput.addEventListener('blur', () => tryPersistInputName(player2NameInput, NAME_KEY_P2));
 
 hydrateSavedNames();
+setGlobalMobileMode(forceMobileMode);
 playerNameInput.focus();
 updateColorUI();
 initGame(); render();

@@ -4,11 +4,13 @@ create table if not exists public.snake_scores (
   score integer not null check (score >= 0),
   mode text not null default 'none' check (mode in ('none', 'shared', 'split')),
   speed text not null default 'normal' check (speed in ('slow', 'normal', 'fast', 'insane')),
+  device_type text not null default 'Laptop' check (device_type in ('Mobile', 'Laptop')),
   updated_at timestamptz not null default now()
 );
 
 alter table public.snake_scores add column if not exists mode text not null default 'none';
 alter table public.snake_scores add column if not exists speed text not null default 'normal';
+alter table public.snake_scores add column if not exists device_type text not null default 'Laptop';
 
 alter table public.snake_scores
   drop constraint if exists snake_scores_name_key;
@@ -23,6 +25,19 @@ begin
     alter table public.snake_scores
       add constraint snake_scores_mode_check
       check (mode in ('none', 'shared', 'split'));
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'snake_scores_device_type_check'
+  ) then
+    alter table public.snake_scores
+      add constraint snake_scores_device_type_check
+      check (device_type in ('Mobile', 'Laptop'));
   end if;
 end $$;
 
