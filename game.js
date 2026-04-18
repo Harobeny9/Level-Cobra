@@ -222,7 +222,7 @@ function tryPersistInputName(inputEl, storageKey) {
   const clean = normalizeName(inputEl.value);
   if (!clean) return;
   if (!isNameAllowed(clean)) {
-    setNameValidationMessage('r u serious bro 😡');
+    setNameValidationMessage('u aint slick lil bro');
     return;
   }
   inputEl.value = clean;
@@ -233,7 +233,7 @@ function tryPersistInputName(inputEl, storageKey) {
 function resolvePlayerName(inputEl, storageKey, fallbackName, playerLabel) {
   const clean = normalizeName(inputEl.value) || fallbackName;
   if (!isNameAllowed(clean)) {
-    setNameValidationMessage('r u serious bro 😡');
+    setNameValidationMessage('u aint slick lil bro');
     inputEl.focus();
     return null;
   }
@@ -975,3 +975,4 @@ hydrateSavedNames();
 playerNameInput.focus();
 updateColorUI();
 initGame(); render();
+
