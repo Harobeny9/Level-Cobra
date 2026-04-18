@@ -253,7 +253,9 @@ function normalizeLeaderboardEntry(entry) {
 
 function loadLocalLeaderboardEntries() {
   const raw = JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
-  leaderboardEntries = raw.map(normalizeLeaderboardEntry);
+  leaderboardEntries = raw
+    .map(normalizeLeaderboardEntry)
+    .filter(entry => isNameAllowed(entry.name));
 }
 
 function saveLocalLeaderboardEntries() {
@@ -262,7 +264,7 @@ function saveLocalLeaderboardEntries() {
 
 function getFilteredLeaderboard(mode = multiMode, speedVal = selectedSpeed) {
   return leaderboardEntries
-    .filter(e => e.mode === mode && e.speed === speedVal)
+    .filter(e => e.mode === mode && e.speed === speedVal && isNameAllowed(e.name))
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 }
@@ -295,6 +297,7 @@ function updateLeaderboardUI() {
 
 function saveToLeaderboardLocal(name, finalScore, mode, speedVal) {
   if (finalScore === 0) return;
+  if (!isNameAllowed(name)) return;
   const existing = leaderboardEntries.find(e => e.name === name && e.mode === mode && e.speed === speedVal);
   if (existing) { if (finalScore > existing.score) existing.score = finalScore; } 
   else { leaderboardEntries.push({ name, score: finalScore, mode, speed: speedVal }); }
@@ -335,7 +338,9 @@ async function loadOnlineLeaderboard() {
     setLeaderboardStatus('Cloud offline - showing local', 'offline');
     leaderboard = getFilteredLeaderboard(mode, speedVal);
   } else {
-    leaderboard = (data || []).map(row => normalizeLeaderboardEntry(row));
+    leaderboard = (data || [])
+      .map(row => normalizeLeaderboardEntry(row))
+      .filter(entry => isNameAllowed(entry.name));
     leaderboard.forEach(remoteEntry => {
       const localExisting = leaderboardEntries.find(e => e.name === remoteEntry.name && e.mode === remoteEntry.mode && e.speed === remoteEntry.speed);
       if (!localExisting) leaderboardEntries.push(remoteEntry);
@@ -376,7 +381,7 @@ async function upsertOnlineScore(name, score, mode, speedVal) {
 async function syncScoresOnline(entries, mode, speedVal) {
   if (!supabaseClient) return;
 
-  const validEntries = entries.filter(entry => entry.score > 0);
+  const validEntries = entries.filter(entry => entry.score > 0 && isNameAllowed(entry.name));
   if (validEntries.length === 0) return;
 
   try {
